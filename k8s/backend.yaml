@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: connects-demo
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: connects-registry:5000/connects-backend:local
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: backend-config
+            - secretRef:
+                name: connects-secrets
+          env:
+            - name: AEROSPIKE_HOST
+              value: aerospike
+            - name: YUGABYTE_HOST
+              value: yugabyte
+            # Explicit so kubelet's Service env injection (BACKEND_PORT ->
+            # "tcp://<clusterip>:8000" from the `backend` Service) is skipped.
+            - name: BACKEND_PORT
+              value: "8000"
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: connects-demo
+spec:
+  selector:
+    app: backend
+  type: NodePort
+  ports:
+    - port: 8000
+      targetPort: http
+      nodePort: 30081

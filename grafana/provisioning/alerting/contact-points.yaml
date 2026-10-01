@@ -1,0 +1,15 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: opensre-webhook
+    receivers:
+      - uid: opensre-webhook-receiver
+        type: webhook
+        disableResolveMessage: false
+        settings:
+          url: ${GRAFANA_ALERT_WEBHOOK_URL}
+          httpMethod: POST
+          autoResolve: true
+          sendReminder: true
+          frequency: 1m

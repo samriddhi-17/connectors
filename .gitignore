@@ -1,0 +1,31 @@
+# Secrets / local config
+.env
+*.secret.yaml
+k8s/secret.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Node
+node_modules/
+frontend/dist/
+
+# OpenSRE runtime artifacts
+opensre/alerts/*.json
+!opensre/alerts/.gitkeep
+.opensre/
+
+# Podman / Kind
+.podman/
+.kind/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,39 @@
+# kind cluster for the Connects demo.
+#
+# Created with the podman runtime provider on Linux / WSL2:
+#   kind create cluster --name connects --config k8s/kind-config.yaml --provider podman
+#
+# The extraPortMappings map host ports to NodePort services defined in the
+# manifests, so the demo is reachable from the host:
+#   frontend  http://localhost:30080
+#   backend   http://localhost:30081
+#   grafana   http://localhost:30090
+#   prometheus http://localhost:30091
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: connects
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 30080
+        protocol: TCP
+      - containerPort: 30081
+        hostPort: 30081
+        protocol: TCP
+      - containerPort: 30090
+        hostPort: 30090
+        protocol: TCP
+      - containerPort: 30091
+        hostPort: 30091
+        protocol: TCP
+  - role: worker
+
+# Local images are shipped to the cluster via a container registry
+# ("connects-registry" on the `kind` podman network). Force containerd to talk
+# to it over plain HTTP (kind load docker-image is unusable for the podman-only
+# provider, so images arrive via this registry instead).
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."connects-registry:5000"]
+      endpoint = ["http://connects-registry:5000"]

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "integrations": [
+    {
+      "id": "connects-grafana",
+      "service": "grafana",
+      "status": "active",
+      "credentials": {
+        "endpoint": "http://localhost:30090",
+        "api_key": "REPLACE_WITH_GRAFANA_SERVICE_ACCOUNT_TOKEN",
+        "verify_ssl": false
+      }
+    },
+    {
+      "id": "connects-alertmanager",
+      "service": "alertmanager",
+      "status": "active",
+      "credentials": {
+        "endpoint": "http://prometheus:30091"
+      }
+    }
+  ]
+}

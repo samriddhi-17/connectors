@@ -1,0 +1,32 @@
+# Non-secret backend configuration.
+#
+# This ConfigMap is the k8s configuration surface for the backend. Values are
+# the same environment variables the app reads elsewhere (compose, local dev);
+# secrets live in the `connects-secrets` Secret created by the deploy script
+# from k8s/secret.env. Explicit `env:` entries in backend.yaml override these.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: connects-demo
+data:
+  APP_NAME: connects-demo
+  ENVIRONMENT: production
+  LOG_LEVEL: INFO
+  CORS_ORIGINS: "*"
+  METRICS_PREFIX: demo
+  AEROSPIKE_ENABLED: "true"
+  AEROSPIKE_PORT: "3000"
+  AEROSPIKE_NAMESPACE: test
+  AEROSPIKE_SET_NAME: demo
+  YUGABYTE_ENABLED: "true"
+  YUGABYTE_PORT: "5433"
+  YUGABYTE_DATABASE: yugabyte
+  YUGABYTE_USER: yugabyte
+  YUGABYTE_SSLMODE: disable
+  YUGABYTE_TABLE_NAME: demo_records
+  OPENSRE_ALERTS_DIR: /app/opensre/alerts
+  # OpenSRE's CLI runs on the operator machine (not in-cluster), so the
+  # bridge only persists alert files; flip to "true" if you install the CLI
+  # inside the backend container.
+  OPENSRE_INVOKE_CLI: "false"

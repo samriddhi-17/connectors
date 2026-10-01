@@ -1,0 +1,35 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: connectors-alerts
+    folder: Demo
+    interval: 1m
+    rules:
+      - uid: connector-unavailable
+        title: ConnectorUnavailable
+        condition: C
+        data:
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: C
+              expr: demo_connector_up == 0
+              instant: true
+              range: false
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: A connector is down
+          description: demo_connector_up == 0 — the OpenSRE bridge was triggered via the opensre-webhook contact point.
+        isPaused: false
+        notification_settings:
+          receiver: opensre-webhook
+          group_by:
+            - alertname

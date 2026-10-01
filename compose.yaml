@@ -1,0 +1,85 @@
+# Local development / demo stack for podman-compose (or docker compose).
+#
+#   podman-compose up --build
+#
+# Every value comes from the environment / .env — nothing is hard-coded.
+
+services:
+  backend:
+    build: ./backend
+    image: ${BACKEND_IMAGE:-connects-backend:${IMAGE_TAG:-local}}
+    env_file:
+      - .env
+    environment:
+      AEROSPIKE_HOST: aerospike
+      YUGABYTE_HOST: yugabyte
+      ENVIRONMENT: compose
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      aerospike:
+        condition: service_started
+      yugabyte:
+        condition: service_started
+    volumes:
+      - ./opensre/alerts:/app/opensre/alerts
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    image: ${FRONTEND_IMAGE:-connects-frontend:${IMAGE_TAG:-local}}
+    environment:
+      VITE_API_BASE: ""
+      VITE_GRAFANA_URL: http://localhost:${GRAFANA_PORT:-3000}
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  prometheus:
+    image: ${PROMETHEUS_IMAGE:-prom/prometheus:v2.54.1}
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  grafana:
+    build: ./grafana
+    image: ${GRAFANA_IMAGE:-connects-grafana:${IMAGE_TAG:-local}}
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      PROMETHEUS_URL: ${PROMETHEUS_URL:-http://prometheus:9090}
+      GRAFANA_ALERT_WEBHOOK_URL: ${GRAFANA_ALERT_WEBHOOK_URL:-http://backend:8000/api/v1/alerts}
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+      - backend
+    restart: unless-stopped
+
+  aerospike:
+    image: ${AEROSPIKE_IMAGE:-aerospike/aerospike-server:7.0.0.6}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  yugabyte:
+    image: ${YUGABYTE_IMAGE:-yugabytedb/yugabyte:2.23.1.0-b220}
+    command:
+      - bin/yugabyted
+      - start
+      - --daemon=false
+      - --ui=false
+    ports:
+      - "5433:5433"
+      - "7000:7000"
+    restart: unless-stopped
